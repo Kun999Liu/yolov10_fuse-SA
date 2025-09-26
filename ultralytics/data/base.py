@@ -157,7 +157,7 @@ class BaseDataset(Dataset):
                     im = cv2.imread(f)  # BGR
             else:  # read image
                 im = cv2.imread(f)  # BGR
-                im_width, im_height, im_bands, projection, geotrans, im = readTif(f, bands=4)  # BGR
+                # im_width, im_height, im_bands, projection, geotrans, im = readTif(f, bands=4)  # BGR
             if im is None:
                 raise FileNotFoundError(f"Image Not Found {f}")
 

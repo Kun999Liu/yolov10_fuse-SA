@@ -619,7 +619,7 @@ class RandomHSV:
             lut_hue = ((x * r[0]) % 180).astype(dtype)
             lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
             lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
-
+            '''图像增强'''
             if img.shape[-1] == 7:
                 img1 = img[..., :4]
                 img2 = img[..., 4:]

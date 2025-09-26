@@ -131,26 +131,55 @@ class BaseModel(nn.Module):
         """
         # 将batch['img']分为image1和image2
         # （目前是相反的)
-        x2 = x[:, 4:7, ...]
-        x = x[:, :4, ...]
-        y, dt, embeddings = [], [], []  # outputs
-        for m in self.model:
-            # 当第10层的时候输入images2
-            if m.i == 12:
-                x = m(x2)
-            else:
+        # 当高分2号影像和sar影像融合成了7通道图象时
+        # print('x的shape为',x.shape[1])
+        # channel_8 = x[0, 7, :, :]
+        # # 打印最大最小值，看看是不是全0
+        # print("第8通道最大值:", channel_8.max().item())
+        # print("第8通道最小值:", channel_8.min().item())
+        # print("第8通道是否全0:", torch.all(channel_8 == 0).item())
+        if x.shape[1] > 4:
+            x2 = x[:, 4:7, ...]
+            x = x[:, :4, ...]
+            y, dt, embeddings = [], [], []  # outputs
+            for m in self.model:
+                # 当第10层的时候输入images2
+                if m.i == 12:
+                    x = m(x2)
+                else:
+                    if m.f != -1:  # if not from previous layer
+                        x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in
+                                                                 m.f]  # from earlier layers
+                    if profile:
+                        self._profile_one_layer(m, x, dt)
+                    x = m(x)  # run
+                y.append(x if m.i in self.save else None)  # save output
+                if visualize:
+                    feature_visualization(x, m.type, m.i, save_dir=visualize)
+                if embed and m.i in embed:
+                    embeddings.append(nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # flatten
+                    if m.i == max(embed):
+                        return torch.unbind(torch.cat(embeddings, 1), dim=0)
+
+        # 当只有高分2号影像或者只有sar影像时
+        elif x.shape[1] > 1 and x.shape[1] <= 4:
+            y, dt, embeddings = [], [], []  # outputs
+            for m in self.model:
                 if m.f != -1:  # if not from previous layer
-                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in
+                                                             m.f]  # from earlier layers
                 if profile:
                     self._profile_one_layer(m, x, dt)
                 x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
-            if visualize:
-                feature_visualization(x, m.type, m.i, save_dir=visualize)
-            if embed and m.i in embed:
-                embeddings.append(nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # flatten
-                if m.i == max(embed):
-                    return torch.unbind(torch.cat(embeddings, 1), dim=0)
+                y.append(x if m.i in self.save else None)  # save output
+                if visualize:
+                    feature_visualization(x, m.type, m.i, save_dir=visualize)
+                if embed and m.i in embed:
+                    embeddings.append(nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # flatten
+                    if m.i == max(embed):
+                        return torch.unbind(torch.cat(embeddings, 1), dim=0)
+
+
         return x
 
     def _predict_augment(self, x):
@@ -869,112 +898,213 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         LOGGER.info(f"\n{'':>3}{'from':>20}{'n':>3}{'params':>10}  {'module':<45}{'arguments':<30}")
     ch = [ch]
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
-        m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
-        for j, a in enumerate(args):
-            if isinstance(a, str):
-                with contextlib.suppress(ValueError):
-                    args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
+    '''--------修改代码--------'''
+    '''------添加条件将backbone模型数量大于20的情况默认为融合模型------'''
+    # print('backbone模型是数量大小',d.get('backbone').__len__())
+    if d.get('backbone').__len__() > 20:
+        for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+            m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
+            for j, a in enumerate(args):
+                if isinstance(a, str):
+                    with contextlib.suppress(ValueError):
+                        args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
+            n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
+            if m in {
+                Classify,
+                Conv,
+                ConvTranspose,
+                GhostConv,
+                Bottleneck,
+                GhostBottleneck,
+                SPP,
+                SPPF,
+                DWConv,
+                Focus,
+                BottleneckCSP,
+                # C1,
+                C2,
+                C2f,
+                RepNCSPELAN4,
+                ADown,
+                SPPELAN,
+                C2fAttn,
+                C3,
+                C3TR,
+                C3Ghost,
+                nn.ConvTranspose2d,
+                DWConvTranspose2d,
+                C3x,
+                RepC3,
+                PSA,
+                SCDown,
+                C2fCIB,
+                SE,
+                C3k2_DEAB,
+            }:
+                c1, c2 = ch[f], args[0]
+                if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+                    c2 = make_divisible(min(c2, max_channels) * width, 8)
+                if m is C2fAttn:
+                    args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)  # embed channels
+                    args[2] = int(
+                        max(round(min(args[2], max_channels // 2 // 32)) * width, 1) if args[2] > 1 else args[2]
+                    )  # num heads
 
-        n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
-        if m in {
-            Classify,
-            Conv,
-            ConvTranspose,
-            GhostConv,
-            Bottleneck,
-            GhostBottleneck,
-            SPP,
-            SPPF,
-            DWConv,
-            Focus,
-            BottleneckCSP,
-            # C1,
-            C2,
-            C2f,
-            RepNCSPELAN4,
-            ADown,
-            SPPELAN,
-            C2fAttn,
-            C3,
-            C3TR,
-            C3Ghost,
-            nn.ConvTranspose2d,
-            DWConvTranspose2d,
-            C3x,
-            RepC3,
-            PSA,
-            SCDown,
-            C2fCIB,
-            SE,
-            C3k2_DEAB,
-        }:
-            c1, c2 = ch[f], args[0]
-            if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
-                c2 = make_divisible(min(c2, max_channels) * width, 8)
-            if m is C2fAttn:
-                args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)  # embed channels
-                args[2] = int(
-                    max(round(min(args[2], max_channels // 2 // 32)) * width, 1) if args[2] > 1 else args[2]
-                )  # num heads
-
-            args = [c1, c2, *args[1:]]
-            if m in (BottleneckCSP, C1, C2, C2f, C2fAttn, C3, C3TR, C3Ghost, C3x, RepC3, C2fCIB, SE):
-                args.insert(2, n)  # number of repeats
-                n = 1
-        elif m is AIFI:
-            args = [ch[f], *args]
-        elif m in {HGStem, HGBlock}:
-            c1, cm, c2 = ch[f], args[0], args[1]
-            args = [c1, cm, c2, *args[2:]]
-            if m is HGBlock:
-                args.insert(4, n)  # number of repeats
-                n = 1
-        elif m is ResNetLayer:
-            c2 = args[1] if args[3] else args[1] * 4
-        elif m is nn.BatchNorm2d:
-            args = [ch[f]]
-        elif m is Concat:
-            c2 = sum(ch[x] for x in f)
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
-            args.append([ch[x] for x in f])
-            if m is Segment:
-                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
-        elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
-            args.insert(1, [ch[x] for x in f])
-        elif m is CBLinear:
-            c2 = args[0]
-            c1 = ch[f]
-            args = [c1, c2, *args[1:]]
-        elif m is CBFuse:
-            c2 = ch[f[-1]]
-        elif m is CBAM:
-            c1, c2 = ch[f], args[0]
-            if c2 != nc:
-                c2 = make_divisible(min(c2, max_channels) * width, 8)
-            args = [c1, *args[1:]]
-        elif m is C1:
-            c2 = ch[f]
-        elif m in {SA}:
-            c2 = args[0]
-        else:
-            c2 = ch[f]
-
-        # 在第10层输入为images2，通道数为3
-        if i == 12:
-            args[0] = 3
-
-        m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
-        t = str(m)[8:-2].replace("__main__.", "")  # module type
-        m.np = sum(x.numel() for x in m_.parameters())  # number params
-        m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
-        if verbose:
-            LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}")  # print
-        save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
-        layers.append(m_)
-        if i == 0:
-            ch = []
-        ch.append(c2)
+                args = [c1, c2, *args[1:]]
+                if m in (BottleneckCSP, C1, C2, C2f, C2fAttn, C3, C3TR, C3Ghost, C3x, RepC3, C2fCIB, SE):
+                    args.insert(2, n)  # number of repeats
+                    n = 1
+            elif m is AIFI:
+                args = [ch[f], *args]
+            elif m in {HGStem, HGBlock}:
+                c1, cm, c2 = ch[f], args[0], args[1]
+                args = [c1, cm, c2, *args[2:]]
+                if m is HGBlock:
+                    args.insert(4, n)  # number of repeats
+                    n = 1
+            elif m is ResNetLayer:
+                c2 = args[1] if args[3] else args[1] * 4
+            elif m is nn.BatchNorm2d:
+                args = [ch[f]]
+            elif m is Concat:
+                c2 = sum(ch[x] for x in f)
+            elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
+                args.append([ch[x] for x in f])
+                if m is Segment:
+                    args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+                args.insert(1, [ch[x] for x in f])
+            elif m is CBLinear:
+                c2 = args[0]
+                c1 = ch[f]
+                args = [c1, c2, *args[1:]]
+            elif m is CBFuse:
+                c2 = ch[f[-1]]
+            elif m is CBAM:
+                c1, c2 = ch[f], args[0]
+                if c2 != nc:
+                    c2 = make_divisible(min(c2, max_channels) * width, 8)
+                args = [c1, *args[1:]]
+            elif m is C1:
+                c2 = ch[f]
+            elif m in {SA}:
+                c2 = args[0]
+            else:
+                c2 = ch[f]
+            # 在第10层输入为images2，通道数为3
+            if i == 12:
+                args[0] = 3
+            m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
+            t = str(m)[8:-2].replace("__main__.", "")  # module type
+            m.np = sum(x.numel() for x in m_.parameters())  # number params
+            m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
+            if verbose:
+                LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}")  # print
+            save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
+            layers.append(m_)
+            if i == 0:
+                ch = []
+            ch.append(c2)
+    else:
+        for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+            m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
+            for j, a in enumerate(args):
+                if isinstance(a, str):
+                    with contextlib.suppress(ValueError):
+                        args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
+            n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
+            if m in {
+                Classify,
+                Conv,
+                ConvTranspose,
+                GhostConv,
+                Bottleneck,
+                GhostBottleneck,
+                SPP,
+                SPPF,
+                DWConv,
+                Focus,
+                BottleneckCSP,
+                # C1,
+                C2,
+                C2f,
+                RepNCSPELAN4,
+                ADown,
+                SPPELAN,
+                C2fAttn,
+                C3,
+                C3TR,
+                C3Ghost,
+                nn.ConvTranspose2d,
+                DWConvTranspose2d,
+                C3x,
+                RepC3,
+                PSA,
+                SCDown,
+                C2fCIB,
+                SE,
+                C3k2_DEAB,
+            }:
+                c1, c2 = ch[f], args[0]
+                if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+                    c2 = make_divisible(min(c2, max_channels) * width, 8)
+                if m is C2fAttn:
+                    args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)  # embed channels
+                    args[2] = int(
+                        max(round(min(args[2], max_channels // 2 // 32)) * width, 1) if args[2] > 1 else args[2]
+                    )  # num heads
+                args = [c1, c2, *args[1:]]
+                if m in (BottleneckCSP, C1, C2, C2f, C2fAttn, C3, C3TR, C3Ghost, C3x, RepC3, C2fCIB, SE):
+                    args.insert(2, n)  # number of repeats
+                    n = 1
+            elif m is AIFI:
+                args = [ch[f], *args]
+            elif m in {HGStem, HGBlock}:
+                c1, cm, c2 = ch[f], args[0], args[1]
+                args = [c1, cm, c2, *args[2:]]
+                if m is HGBlock:
+                    args.insert(4, n)  # number of repeats
+                    n = 1
+            elif m is ResNetLayer:
+                c2 = args[1] if args[3] else args[1] * 4
+            elif m is nn.BatchNorm2d:
+                args = [ch[f]]
+            elif m is Concat:
+                c2 = sum(ch[x] for x in f)
+            elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
+                args.append([ch[x] for x in f])
+                if m is Segment:
+                    args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+                args.insert(1, [ch[x] for x in f])
+            elif m is CBLinear:
+                c2 = args[0]
+                c1 = ch[f]
+                args = [c1, c2, *args[1:]]
+            elif m is CBFuse:
+                c2 = ch[f[-1]]
+            elif m is CBAM:
+                c1, c2 = ch[f], args[0]
+                if c2 != nc:
+                    c2 = make_divisible(min(c2, max_channels) * width, 8)
+                args = [c1, *args[1:]]
+            elif m is C1:
+                c2 = ch[f]
+            elif m in {SA}:
+                c2 = args[0]
+            else:
+                c2 = ch[f]
+            m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
+            t = str(m)[8:-2].replace("__main__.", "")  # module type
+            m.np = sum(x.numel() for x in m_.parameters())  # number params
+            m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
+            if verbose:
+                LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m.np:10.0f}  {t:<45}{str(args):<30}")  # print
+            save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
+            layers.append(m_)
+            if i == 0:
+                ch = []
+            ch.append(c2)
     return nn.Sequential(*layers), sorted(save)
 
 

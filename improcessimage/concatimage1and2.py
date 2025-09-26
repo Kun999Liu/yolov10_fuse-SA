@@ -14,7 +14,7 @@ from ultralytics.data.utils import readTif
 # another_folder = 'datasets/mydata/images2/train'
 # "C:\Users\liuku\Desktop\datasets"
 
-current_folder = r"D:\yolo\datasets\images_common_tif"
+current_folder = r"D:\yolo\datasets\datasets\train\images"
 another_folder = r"D:\yolo\datasets\images_common_sar"
 
 tif_files = glob.glob(os.path.join(current_folder, '*.tif'))

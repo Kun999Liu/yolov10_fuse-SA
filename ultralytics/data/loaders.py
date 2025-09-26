@@ -249,6 +249,31 @@ class LoadScreenshots:
         return [str(self.screen)], [im0], [s]  # screen, img, string
 
 
+def read_image(path, mode):
+    """
+    mode="tif"  : 读取tif文件
+    mode="npy"  : 读取npy文件
+    mode="img"  : 读取普通图像(jpg/png等)
+    """
+
+    if mode == "tif":
+        if path.lower().endswith(".tif"):
+            im_width, im_height, im_bands, projection, geotrans, im0 = readTif(path, band=4)
+        return im0
+
+    elif mode == "npy":
+        if path.lower().endswith(".npy"):
+            im0 = np.load(path.replace(".tif", ".npy"))
+        return im0
+
+    elif mode == "img":
+        im0 = cv2.imread(path)  # BGR
+        return im0
+
+    else:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+
 class LoadImagesAndVideos:
     """
     YOLOv8 image/video dataloader.
@@ -359,11 +384,9 @@ class LoadImagesAndVideos:
             else:
                 self.mode = "image"
                 # im0 = cv2.imread(path)  # BGR
-                # 读取tif文件
-                # im_width1, im_height1, im_bands1, projection1, geotrans1, im0 = readTif(path)
                 # 读取npy文件
-                # path = path.replace('.tif', '.npy')
-                im0 = np.load(path.replace('.tif', '.npy'))
+                # im0 = np.load(path.replace('.tif', '.npy'))
+                im0 = read_image(path, mode="npy")  # 读取tif文件
                 if im0 is None:
                     raise FileNotFoundError(f"Image Not Found {path}")
                 paths.append(path)
