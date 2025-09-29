@@ -101,7 +101,7 @@ head:
 so we can define the freeze list to contain all modules with 'model.0.' - 'model.9.' in their names:
 
 ```bash
-python train.py --freeze 10
+python train_yolov10.py --freeze 10
 ```
 
 ## Freeze All Layers
@@ -109,7 +109,7 @@ python train.py --freeze 10
 To freeze the full model except for the final output convolution layers in Detect(), we set freeze list to contain all modules with 'model.0.' - 'model.23.' in their names:
 
 ```bash
-python train.py --freeze 24
+python train_yolov10.py --freeze 24
 ```
 
 ## Results
@@ -117,7 +117,7 @@ python train.py --freeze 24
 We train YOLOv5m on VOC on both of the above scenarios, along with a default model (no freezing), starting from the official COCO pretrained `--weights yolov5m.pt`:
 
 ```bash
-train.py --batch 48 --weights yolov5m.pt --data voc.yaml --epochs 50 --cache --img 512 --hyp hyp.finetune.yaml
+train_yolov10.py --batch 48 --weights yolov5m.pt --data voc.yaml --epochs 50 --cache --img 512 --hyp hyp.finetune.yaml
 ```
 
 ### Accuracy Comparison

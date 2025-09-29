@@ -58,7 +58,7 @@ pip install onnx>=1.10.0
 Train the YOLOv5 model:
 
 ```bash
-python train.py
+python train_yolov10.py
 ```
 
 Validate the model for Precision, Recall, and mAP
