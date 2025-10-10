@@ -138,6 +138,7 @@ class BaseModel(nn.Module):
         # print("第8通道最大值:", channel_8.max().item())
         # print("第8通道最小值:", channel_8.min().item())
         # print("第8通道是否全0:", torch.all(channel_8 == 0).item())
+        '''合成的通道数默认为8，这是tensor默认的处理通道数，所以这里不需要处理，最后一个通道的值为0'''
         if x.shape[1] > 4:
             x2 = x[:, 4:7, ...]
             x = x[:, :4, ...]
