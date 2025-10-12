@@ -314,7 +314,7 @@ class BaseModel(nn.Module):
         if not hasattr(self, "criterion"):
             self.criterion = self.init_criterion()
 
-        # 传入两类图片，得到一个预测结果，batch["img"]->bs*6*416*416
+        '''# 传入两类图片，得到一个预测结果，batch["img"]->bs*6*416*416'''
         preds = self.forward(batch["img"]) if preds is None else preds
         return self.criterion(preds, batch)
 
@@ -345,11 +345,16 @@ class DetectionModel(BaseModel):
         if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            # 修改匿名函数
+            '''# 修改匿名函数 ch * 2'''
             forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
             if isinstance(m, v10Detect):
                 forward = lambda x: self.forward(x)["one2many"]
             m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch * 2, s, s))])  # forward
+
+            # forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+            # if isinstance(m, v10Detect):
+            #     forward = lambda x: self.forward(x)["one2many"]
+            # m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s))])  # forward
             self.stride = m.stride
             m.bias_init()  # only run once
         else:
