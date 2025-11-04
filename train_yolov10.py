@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # model = YOLOv10(r"G:\wanxingyu\project\yolov10\yolov10\ultralytics\cfg\models\v10\yolov10m.yaml").load('yolov10m.pt')
     # model = YOLOv10(r"D:\OneDrive_files\OneDrive\code\yolov10_fuse-SA\ultralytics\cfg\models\v10\yolov10m_fuse_ndsi_C3k2_DEAB.yaml")
     model = YOLOv10(
-        r"F:\my_code\yolov10_fuse-SA\ultralytics\cfg\models\v10\yolov10m_fuse_ndsi.yaml")
+        r"D:\Git\yolov10_fuse-SA\ultralytics\cfg\models\v10\yolov10m_fuse.yaml")
     # model = YOLO(r'G:\wanxingyu\project\yolov10\yolov10-fuse\ultralytics\cfg\models\v10\yolov10m_fuse_noPSA.yaml')
 
     # 训练模型
@@ -23,10 +23,10 @@ if __name__ == '__main__':
                           imgsz=416,
                           amp=False,
                           workers=0,
-                          device='0',
+                          device='cpu',
                           exist_ok=True,
                           # scale='m',
-                          name="fuse_ndsi_transmissiontower"
+                          name="fuse_ndsi_windfram"
                           )
 """测试git"""
 

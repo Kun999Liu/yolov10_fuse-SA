@@ -11,7 +11,7 @@ Describe:
 import numpy as np
 
 # 假设文件名为 'data.npy'
-file_path = r"D:\yolo\mydata_7bands\images\train\GF2_PMS1_E82.7_N45.2_20220430_L1A0006441524-pansharpen2colNum_12rowNum_39.npy"
+file_path = r"D:\yolodatasets\windturbine_6bands\images\train\GF2_PMS1_E82.7_N45.2_20220430_L1A0006441524-pansharpen2colNum_12rowNum_39.npy"
 
 # 加载 .npy 文件
 data = np.load(file_path)

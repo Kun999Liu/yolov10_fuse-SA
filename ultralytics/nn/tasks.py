@@ -140,12 +140,12 @@ class BaseModel(nn.Module):
         # print("第8通道是否全0:", torch.all(channel_8 == 0).item())
         '''合成的通道数默认为8，这是tensor默认的处理通道数，所以这里不需要处理，最后一个通道的值为0'''
         if x.shape[1] > 4:
-            x2 = x[:, 4:7, ...]
-            x = x[:, :4, ...]
+            x2 = x[:, 3:6, ...]
+            x = x[:, :3, ...]
             y, dt, embeddings = [], [], []  # outputs
             for m in self.model:
                 # 当第10层的时候输入images2
-                if m.i == 12:
+                if m.i == 11:
                     x = m(x2)
                 else:
                     if m.f != -1:  # if not from previous layer
@@ -998,7 +998,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             else:
                 c2 = ch[f]
             # 在第10层输入为images2，通道数为3
-            if i == 12:
+            if i == 11:
                 args[0] = 3
             m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
             t = str(m)[8:-2].replace("__main__.", "")  # module type

@@ -620,9 +620,9 @@ class RandomHSV:
             lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
             lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
             '''图像增强'''
-            if img.shape[-1] == 7:
-                img1 = img[..., :4]
-                img2 = img[..., 4:]
+            if img.shape[-1] == 6:
+                img1 = img[..., :3]
+                img2 = img[..., 3:]
 
                 hue1, sat1, val1 = cv2.split(cv2.cvtColor(img1, cv2.COLOR_BGR2HSV))
                 hue2, sat2, val2 = cv2.split(cv2.cvtColor(img2, cv2.COLOR_BGR2HSV))
