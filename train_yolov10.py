@@ -17,8 +17,8 @@ if __name__ == '__main__':
     # 训练模型
     results = model.train(data="./data.yaml",
                           resume=True,
-                          epochs=1,
-                          batch=16,
+                          epochs=100,
+                          batch=8,
                           patience=30,
                           imgsz=416,
                           amp=False,
@@ -26,7 +26,7 @@ if __name__ == '__main__':
                           device='cpu',
                           exist_ok=True,
                           # scale='m',
-                          name="fuse_ndsi_windfram"
+                          name=r"D:\Git\yolov10_fuse-SA\ultralytics\run\fuse_ndsi_windfram"
                           )
 """测试git"""
 

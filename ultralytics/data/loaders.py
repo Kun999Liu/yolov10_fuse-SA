@@ -385,8 +385,8 @@ class LoadImagesAndVideos:
                 self.mode = "image"
                 # im0 = cv2.imread(path)  # BGR
                 # 读取npy文件
-                # im0 = np.load(path.replace('.tif', '.npy'))
-                im0 = read_image(path, mode="npy")  # 读取tif文件
+                im0 = np.load(path.replace('.tif', '.npy'))
+                # im0 = read_image(path, mode="npy")  # 读取tif文件
                 if im0 is None:
                     raise FileNotFoundError(f"Image Not Found {path}")
                 paths.append(path)

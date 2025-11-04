@@ -4,7 +4,8 @@
 #test: image/test # test images (optional)
 
 #path: D:/windfram&tower/windturbine_7bands # dataset root dir
-path: D:/yolodatasets/windturbine_6bands
+path: D:/yolodatasets/testdatasets
+#path: D:/yolodatasets/windturbine_6bands
 train: images/train # train images (relative to 'path') 128 images
 val: images/val # val images (relative to 'path') 128 images
 test: image/test # test images (optional)
