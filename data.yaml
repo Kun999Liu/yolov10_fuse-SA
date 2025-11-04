@@ -2,9 +2,9 @@
 #train: images/train # train images (relative to 'path') 128 images
 #val: images/val # val images (relative to 'path') 128 images
 #test: image/test # test images (optional)
-
+path: F:/my_code/WindFarm_6bands
 #path: D:/windfram&tower/windturbine_7bands # dataset root dir
-path: D:/yolodatasets/testdatasets
+#path: D:/yolodatasets/testdatasets
 #path: D:/yolodatasets/windturbine_6bands
 train: images/train # train images (relative to 'path') 128 images
 val: images/val # val images (relative to 'path') 128 images

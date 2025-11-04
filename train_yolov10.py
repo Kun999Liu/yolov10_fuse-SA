@@ -1,7 +1,6 @@
 import os
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ['GTIFF_SRS_SOURCE'] = 'EPSG'
-
 import warnings
 warnings.filterwarnings('ignore')
 from ultralytics import YOLOv10
@@ -11,25 +10,24 @@ if __name__ == '__main__':
     # model = YOLOv10(r"G:\wanxingyu\project\yolov10\yolov10\ultralytics\cfg\models\v10\yolov10m.yaml").load('yolov10m.pt')
     # model = YOLOv10(r"D:\OneDrive_files\OneDrive\code\yolov10_fuse-SA\ultralytics\cfg\models\v10\yolov10m_fuse_ndsi_C3k2_DEAB.yaml")
     model = YOLOv10(
-        r"D:\Git\yolov10_fuse-SA\ultralytics\cfg\models\v10\yolov10m_fuse.yaml")
+        r".\yolov10m_fuse.yaml")
     # model = YOLO(r'G:\wanxingyu\project\yolov10\yolov10-fuse\ultralytics\cfg\models\v10\yolov10m_fuse_noPSA.yaml')
 
     # 训练模型
     results = model.train(data="./data.yaml",
                           resume=True,
-                          epochs=100,
-                          batch=8,
-                          patience=30,
+                          epochs=300,
+                          batch=16,
+                          patience=50,
                           imgsz=416,
                           amp=False,
-                          workers=0,
-                          device='cpu',
+                          workers=4,
+                          device='0',
                           exist_ok=True,
                           # scale='m',
-                          name=r"D:\Git\yolov10_fuse-SA\ultralytics\run\fuse_ndsi_windfram"
+                          name=r".\ultralytics\run\fuse_ndsi_windfram_300epochs"
                           )
 """测试git"""
-
 
 # import sys
 # import torch
