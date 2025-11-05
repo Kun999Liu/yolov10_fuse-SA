@@ -771,19 +771,19 @@ def torch_safe_load(weight):
         (dict): The loaded PyTorch model.
     """
     import torch
-    import torch.serialization
+    # import torch.serialization
     from ultralytics.utils.downloads import attempt_download_asset
-    from ultralytics.nn.tasks import YOLOv10DetectionModel
-
-    # ✅ 显式允许安全加载的类（PyTorch 2.6+ 默认 weights_only=True 导致报错）
-    torch.serialization.add_safe_globals([
-        YOLOv10DetectionModel,
-        torch.nn.Module,
-        torch.nn.Parameter,
-        torch.nn.modules.container.Sequential,
-        torch.optim.Optimizer,
-        dict, list, tuple
-    ])
+    # from ultralytics.nn.tasks import YOLOv10DetectionModel
+    #
+    # # ✅ 显式允许安全加载的类（PyTorch 2.6+ 默认 weights_only=True 导致报错）
+    # torch.serialization.add_safe_globals([
+    #     YOLOv10DetectionModel,
+    #     torch.nn.Module,
+    #     torch.nn.Parameter,
+    #     torch.nn.modules.container.Sequential,
+    #     torch.optim.Optimizer,
+    #     dict, list, tuple
+    # ])
 
     check_suffix(file=weight, suffix=".pt")
     file = attempt_download_asset(weight)  # search online if missing locally

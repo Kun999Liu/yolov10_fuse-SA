@@ -483,11 +483,11 @@ def strip_optimizer(f: Union[str, Path] = "best.pt", s: str = "") -> None:
             strip_optimizer(f)
         ```
     """
-    import torch.serialization
-    from ultralytics.nn.tasks import YOLOv10DetectionModel  # 允许 YOLOv10 模型类反序列化
-
-    # ✅ 显式允许 YOLOv10DetectionModel 反序列化
-    torch.serialization.add_safe_globals([YOLOv10DetectionModel])
+    # import torch.serialization
+    # from ultralytics.nn.tasks import YOLOv10DetectionModel  # 允许 YOLOv10 模型类反序列化
+    #
+    # # ✅ 显式允许 YOLOv10DetectionModel 反序列化
+    # torch.serialization.add_safe_globals([YOLOv10DetectionModel])
     x = torch.load(f, map_location=torch.device("cpu"), weights_only=False)
     if "model" not in x:
         LOGGER.info(f"Skipping {f}, not a valid Ultralytics model.")
