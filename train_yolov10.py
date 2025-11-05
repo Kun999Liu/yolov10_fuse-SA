@@ -16,16 +16,16 @@ if __name__ == '__main__':
     # 训练模型
     results = model.train(data="./data.yaml",
                           resume=True,
-                          epochs=300,
+                          epochs=1,
                           batch=16,
-                          patience=50,
+                          patience=80,
                           imgsz=416,
                           amp=False,
-                          workers=4,
+                          workers=8,
                           device='0',
                           exist_ok=True,
                           # scale='m',
-                          name=r".\ultralytics\run\fuse_ndsi_windfram_300epochs"
+                          name=r"D:\Git\yolov10_fuse\ultralytics\run\v10m_fuse_6bands_windfram_500epochs"
                           )
 """测试git"""
 

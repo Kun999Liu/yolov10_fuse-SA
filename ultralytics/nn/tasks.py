@@ -770,7 +770,20 @@ def torch_safe_load(weight):
     Returns:
         (dict): The loaded PyTorch model.
     """
+    import torch
+    import torch.serialization
     from ultralytics.utils.downloads import attempt_download_asset
+    from ultralytics.nn.tasks import YOLOv10DetectionModel
+
+    # ✅ 显式允许安全加载的类（PyTorch 2.6+ 默认 weights_only=True 导致报错）
+    torch.serialization.add_safe_globals([
+        YOLOv10DetectionModel,
+        torch.nn.Module,
+        torch.nn.Parameter,
+        torch.nn.modules.container.Sequential,
+        torch.optim.Optimizer,
+        dict, list, tuple
+    ])
 
     check_suffix(file=weight, suffix=".pt")
     file = attempt_download_asset(weight)  # search online if missing locally
@@ -782,7 +795,7 @@ def torch_safe_load(weight):
                     "ultralytics.yolo.data": "ultralytics.data",
                 }
         ):  # for legacy 8.0 Classify and Pose models
-            ckpt = torch.load(file, map_location="cpu")
+            ckpt = torch.load(file, map_location="cpu", weights_only=False)
 
     except ModuleNotFoundError as e:  # e.name is missing module name
         if e.name == "models":
@@ -802,7 +815,7 @@ def torch_safe_load(weight):
             f"run a command with an official YOLOv8 model, i.e. 'yolo predict model=yolov8n.pt'"
         )
         check_requirements(e.name)  # install missing module
-        ckpt = torch.load(file, map_location="cpu")
+        ckpt = torch.load(file, map_location="cpu", weights_only=False)
 
     if not isinstance(ckpt, dict):
         # File is likely a YOLO instance saved with i.e. torch.save(model, "saved_model.pt")
