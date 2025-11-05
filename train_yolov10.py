@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # 训练模型
     results = model.train(data="./data.yaml",
                           resume=True,
-                          epochs=1,
+                          epochs=500,
                           batch=16,
                           patience=80,
                           imgsz=416,

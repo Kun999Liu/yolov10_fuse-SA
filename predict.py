@@ -8,19 +8,19 @@ from ultralytics import YOLOv10
 if __name__ == '__main__':
     # 加载模型
     model = YOLOv10(
-        r'D:\Git\yolov10_fuse-SA\ultralytics\run\fuse_ndsi_windfram\weights\best.pt')
+        r'.\ultralytics\run\v10m_fuse_6bands_windfram_500epochs\weights\best.pt')
 
 
     # 开始预测
     # model(source=r"F:\wxy_code\mydata\images\val", save=True)
-    results = model.predict(source=r"D:\yolodatasets\testdatasets\images\test",
+    results = model.predict(source=r".\ultralytics\testimages",
                             imgsz=416,
                             cache='disk',
-                            workers=0,
-                            device='cpu',
+                            workers=8,
+                            device='0',
                             exist_ok=False,
                             save=True,
                             #是否保存打印特征图
                             visualize=False,
-                            name=r"D:\Git\yolov10_fuse-SA\ultralytics\run\detect\pre"
+                            name=r"D:\Git\yolov10_fuse\ultralytics\run\detect\pre"
                             )

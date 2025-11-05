@@ -37,7 +37,7 @@ from ultralytics.utils.downloads import download, safe_download, unzip_file
 from ultralytics.utils.ops import segments2boxes
 
 HELP_URL = "See https://docs.ultralytics.com/datasets/detect for dataset formatting guidance."
-IMG_FORMATS = {"bmp", "dng", "jpeg", "jpg", "mpo", "png", "tif", "tiff", "webp", "pfm"}  # image suffixes
+IMG_FORMATS = {"bmp", "dng", "jpeg", "jpg", "mpo", "png", "tif", "tiff", "webp", "pfm", "npy"}  # image suffixes
 VID_FORMATS = {"asf", "avi", "gif", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ts", "wmv", "webm"}  # video suffixes
 PIN_MEMORY = str(os.getenv("PIN_MEMORY", True)).lower() == "true"  # global pin_memory for dataloaders
 
@@ -124,10 +124,11 @@ def verify_image(args):
     nf, nc, msg = 0, 0, ""
     try:
         # im = Image.open(im_file)
-        im_width, im_height, im_bands, projection, geotrans, im = readTif(im_file)
+        # im_width, im_height, im_bands, projection, geotrans, im = readTif(im_file)
         # im.verify()  # PIL verify
-        shape = exif_size(im)  # image size
-        shape = (shape[1], shape[0])  # hw
+        im0 = np.load(im_file.replace('.tif', '.npy'))
+        # shape = exif_size(im)  # image size
+        # shape = (shape[1], shape[0])  # hw
         # assert (shape[0] > 9) & (shape[1] > 9), f"image size {shape} <10 pixels"
         # assert im.format.lower() in IMG_FORMATS, f"invalid image format {im.format}"
         # if im.format.lower() in ("jpg", "jpeg"):
@@ -152,9 +153,10 @@ def verify_image_label(args):
         # Verify images
         # im = Image.open(im_file)
         # im.verify()  # PIL verify
-        im_width, im_height, im_bands, projection, geotrans, im = readTif(im_file)
+        # im_width, im_height, im_bands, projection, geotrans, im = np.load(im_file)
+        im0 = np.load(im_file.replace('.tif', '.npy'))
         # shape = exif_size(im)  # image size
-        shape = (im_height, im_width)  # hw
+        # shape = (im_height, im_width)  # hw
         # assert (shape[0] > 9) & (shape[1] > 9), f"image size {shape} <10 pixels"
         # assert im.format.lower() in IMG_FORMATS, f"invalid image format {im.format}"
         # if im.format.lower() in ("jpg", "jpeg"):

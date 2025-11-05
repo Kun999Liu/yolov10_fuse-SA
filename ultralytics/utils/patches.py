@@ -38,10 +38,43 @@ def imwrite(filename: str, img: np.ndarray, params=None):
     Returns:
         (bool): True if the file was written, False otherwise.
     """
+    # try:
+    #     cv2.imencode(Path(filename).suffix, img, params)[1].tofile(filename)
+    #     return True
+    # except Exception:
+    #     return False
     try:
-        cv2.imencode(Path(filename).suffix, img, params)[1].tofile(filename)
+        filename = Path(filename)
+
+        # 如果后缀是 .npy，改成 .jpg 保存
+        if filename.suffix.lower() == ".npy":
+            filename = filename.with_suffix(".jpg")
+
+        # 如果是 float，归一化到 0-255
+        if np.issubdtype(img.dtype, np.floating):
+            img = (img * 255).clip(0, 255).astype(np.uint8)
+
+        # 如果是单通道，转换成3通道
+        if img.ndim == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        elif img.ndim == 3 and img.shape[2] == 1:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+        # 创建父目录
+        filename.parent.mkdir(parents=True, exist_ok=True)
+
+        # 保存图片
+        success, encoded = cv2.imencode(filename.suffix, img, params or [])
+        if not success:
+            print(f"[ERROR] imencode failed for {filename}")
+            return False
+
+        encoded.tofile(str(filename))
+        print(f"[OK] Saved image to {filename}")
         return True
-    except Exception:
+
+    except Exception as e:
+        print(f"[EXCEPTION] Failed to save {filename}: {e}")
         return False
 
 
